@@ -57,14 +57,14 @@ const ERROR_MESSAGES: Record<string, TranslationKey> = {
 };
 
 const inputClass =
-  'h-11 w-full min-w-0 rounded-xl border border-neon-cyan/25 bg-obsidian/70 px-3.5 text-sm text-white outline-none transition-all placeholder:text-white/25 focus:border-neon-cyan focus:shadow-neon-cyan';
+  'h-11 min-w-0 rounded-xl max-lg:landscape:h-9 border border-neon-cyan/25 bg-obsidian/70 text-sm text-white outline-none transition-all placeholder:text-white/25 focus:border-neon-cyan focus:shadow-neon-cyan';
 
 function NeonInput(props: React.InputHTMLAttributes<HTMLInputElement> & { label: string }) {
   const { label, ...rest } = props;
   return (
     <label className="flex flex-col gap-1.5">
       <span className="text-xs font-semibold text-white/60">{label}</span>
-      <input {...rest} className={inputClass} />
+      <input {...rest} className={`${inputClass} w-full px-3.5`} />
     </label>
   );
 }
@@ -94,7 +94,7 @@ function PhoneNumberInput({
           maxLength={5}
           value={countryCode}
           onChange={(e) => onCountryCodeChange(e.target.value.replace(/[^\d+]/g, ''))}
-          className={`${inputClass} w-20 shrink-0 text-center font-mono`}
+          className={`${inputClass} w-[3.75rem] shrink-0 px-1 text-center font-mono`}
         />
         <input
           aria-label={t('auth_phone_label')}
@@ -105,7 +105,7 @@ function PhoneNumberInput({
           placeholder={t('auth_phone_placeholder')}
           value={phone}
           onChange={(e) => onPhoneChange(e.target.value.replace(/[^\d\s-]/g, ''))}
-          className={`${inputClass} flex-1 font-mono`}
+          className={`${inputClass} flex-1 px-3.5 font-mono`}
         />
       </div>
     </div>
@@ -140,9 +140,9 @@ function OptionButton({
       whileTap={disabled ? undefined : { scale: 0.97 }}
       onClick={onClick}
       disabled={disabled}
-      className={`group flex w-full items-center gap-3 rounded-xl border bg-obsidian-card/70 px-4 py-3 text-left transition-all disabled:cursor-not-allowed disabled:opacity-35 disabled:shadow-none ${accentClass}`}
+      className={`group flex w-full items-center gap-3 rounded-xl border bg-obsidian-card/70 px-4 py-3 text-left transition-all max-lg:landscape:py-1.5 disabled:cursor-not-allowed disabled:opacity-35 disabled:shadow-none ${accentClass}`}
     >
-      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-white/5">{icon}</span>
+      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-white/5 max-lg:landscape:h-7 max-lg:landscape:w-7">{icon}</span>
       <span className="min-w-0 flex-1">
         <span className="block text-sm font-bold text-white">{label}</span>
         {description && <span className="block truncate text-[11px] text-white/45">{description}</span>}
@@ -305,7 +305,7 @@ export default function LoginPage() {
   );
 
   return (
-    <div className="relative flex min-h-dvh flex-col items-center justify-center px-4 py-10 max-lg:landscape:py-4">
+    <div className="relative flex min-h-dvh flex-col items-center justify-center px-4 py-10 max-lg:landscape:py-2">
       <div className="absolute right-4 top-4 flex items-center gap-2 sm:right-6 sm:top-6">
         <LanguageSwitcher />
         <ThemeToggle />
@@ -315,19 +315,19 @@ export default function LoginPage() {
         initial={{ opacity: 0, y: 24, scale: 0.97 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.45, ease: 'easeOut' }}
-        className="w-full max-w-md max-lg:landscape:max-w-2xl"
+        className="w-full max-w-md max-lg:landscape:max-w-2xl max-lg:landscape:[zoom:0.85]"
       >
-        <div className="mb-6 flex flex-col items-center gap-2 text-center max-lg:landscape:mb-3">
+        <div className="mb-6 flex flex-col items-center gap-2 text-center max-lg:landscape:mb-2">
           <Logo size="lg" href="/login" />
-          <p className="text-xs uppercase tracking-[0.3em] text-white/40">{t('app_tagline')}</p>
+          <p className="text-xs uppercase tracking-[0.3em] text-white/40 max-lg:landscape:hidden">{t('app_tagline')}</p>
         </div>
 
-        <GlassPanel className="relative overflow-hidden p-6 shadow-neon-purple sm:p-8 max-lg:landscape:p-5">
+        <GlassPanel className="relative overflow-clip p-6 shadow-neon-purple sm:p-8 max-lg:landscape:px-5 max-lg:landscape:py-3">
           <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-neon-magenta/15 blur-3xl" />
           <div className="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-neon-cyan/15 blur-3xl" />
 
           <div className="relative">
-            <p className="mb-5 text-sm font-semibold text-white/60">{t(SUBTITLE[mode])}</p>
+            <p className="mb-5 text-sm font-semibold text-white/60 max-lg:landscape:mb-2">{t(SUBTITLE[mode])}</p>
 
             {!auth.isFirebaseConfigured && (
               <p className="mb-4 flex gap-2 rounded-xl border border-neon-magenta/40 bg-neon-magenta/10 p-3 text-xs leading-relaxed text-neon-magenta">
@@ -356,7 +356,7 @@ export default function LoginPage() {
 
             <AnimatePresence mode="wait">
               {mode === 'select' && (
-                <motion.div key="select" {...panelMotion} className="grid gap-2.5 max-lg:landscape:grid-cols-2">
+                <motion.div key="select" {...panelMotion} className="grid gap-2.5 max-lg:landscape:grid-cols-2 max-lg:landscape:gap-2">
                   <OptionButton icon={<GoogleIcon className="h-5 w-5" />} label={t('auth_google')} onClick={handleGoogle} disabled={memberDisabled} />
                   <OptionButton icon={<MailIcon className="h-5 w-5" />} label={t('auth_email')} onClick={() => switchMode('email')} disabled={memberDisabled} />
                   <OptionButton icon={<PhoneIcon className="h-5 w-5" />} label={t('auth_phone')} onClick={() => switchMode('phone')} disabled={memberDisabled} />
@@ -364,7 +364,7 @@ export default function LoginPage() {
                     type="button"
                     onClick={() => switchMode('signup')}
                     disabled={memberDisabled}
-                    className="mx-auto flex items-center gap-1.5 py-1 text-sm font-semibold text-neon-purple underline-offset-4 transition-colors hover:text-neon-cyan hover:underline disabled:cursor-not-allowed disabled:opacity-35 max-lg:landscape:col-span-2"
+                    className="mx-auto flex items-center gap-1.5 py-1 text-sm max-lg:landscape:py-0 font-semibold text-neon-purple underline-offset-4 transition-colors hover:text-neon-cyan hover:underline disabled:cursor-not-allowed disabled:opacity-35 max-lg:landscape:col-span-2"
                   >
                     <UserPlusIcon className="h-4 w-4" glow={false} />
                     {t('auth_signup_prompt')}
@@ -394,7 +394,7 @@ export default function LoginPage() {
               )}
 
               {mode === 'email' && (
-                <motion.form key="email" onSubmit={handleEmailLogin} {...panelMotion} className="flex flex-col gap-3">
+                <motion.form key="email" onSubmit={handleEmailLogin} {...panelMotion} className="flex flex-col gap-3 max-lg:landscape:gap-2">
                   {emailField}
                   {passwordFields(false)}
                   <NeonButton type="submit" size="lg" disabled={busy} className="mt-2 w-full">
@@ -404,7 +404,7 @@ export default function LoginPage() {
               )}
 
               {mode === 'phone' && (
-                <motion.form key="phone" onSubmit={handlePhoneLogin} {...panelMotion} className="flex flex-col gap-3">
+                <motion.form key="phone" onSubmit={handlePhoneLogin} {...panelMotion} className="flex flex-col gap-3 max-lg:landscape:gap-2">
                   {phoneField}
                   {passwordFields(false)}
                   <NeonButton type="submit" size="lg" disabled={busy} className="mt-2 w-full">
@@ -414,7 +414,7 @@ export default function LoginPage() {
               )}
 
               {mode === 'signupEmail' && (
-                <motion.form key="signupEmail" onSubmit={handleEmailSignup} {...panelMotion} className="flex flex-col gap-3">
+                <motion.form key="signupEmail" onSubmit={handleEmailSignup} {...panelMotion} className="flex flex-col gap-3 max-lg:landscape:gap-2">
                   {emailField}
                   {passwordFields(true)}
                   <NeonButton type="submit" size="lg" disabled={busy} className="mt-2 w-full">
@@ -424,7 +424,7 @@ export default function LoginPage() {
               )}
 
               {mode === 'signupPhone' && (
-                <motion.form key="signupPhone" onSubmit={handlePhoneSignup} {...panelMotion} className="flex flex-col gap-3">
+                <motion.form key="signupPhone" onSubmit={handlePhoneSignup} {...panelMotion} className="flex flex-col gap-3 max-lg:landscape:gap-2">
                   {phoneField}
                   {passwordFields(true)}
                   <NeonButton type="submit" size="lg" disabled={busy} className="mt-2 w-full">
@@ -434,7 +434,7 @@ export default function LoginPage() {
               )}
 
               {mode === 'guest' && (
-                <motion.form key="guest" onSubmit={handleGuest} {...panelMotion} className="flex flex-col gap-3">
+                <motion.form key="guest" onSubmit={handleGuest} {...panelMotion} className="flex flex-col gap-3 max-lg:landscape:gap-2">
                   <NeonInput
                     label={t('auth_guest_nickname_label')}
                     type="text"
@@ -465,7 +465,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => switchMode(PARENT_MODE[mode])}
-                className="mx-auto mt-5 flex items-center gap-1 text-xs text-white/50 hover:text-neon-cyan"
+                className="mx-auto mt-5 flex items-center gap-1 text-xs max-lg:landscape:mt-2 text-white/50 hover:text-neon-cyan"
               >
                 <ChevronIcon direction="left" className="h-3.5 w-3.5" glow={false} />
                 {t('auth_back')}
