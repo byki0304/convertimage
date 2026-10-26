@@ -21,6 +21,7 @@ export default function HistoryPage() {
             {t('history_title')}
           </h1>
           <p className="mt-1 text-xs text-white/45">{isMemberHistory ? t('history_member_note') : t('history_guest_note')}</p>
+          <p className="mt-0.5 text-xs text-white/45">{t('history_retention_note')}</p>
         </div>
         {entries.length > 0 && (
           <NeonButton variant="danger" size="sm" icon={<TrashIcon />} onClick={() => void clearHistory()}>

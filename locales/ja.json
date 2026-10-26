@@ -129,6 +129,13 @@
   "password_too_many": "試行回数が多すぎます。しばらくしてから再度お試しください。",
   "password_unavailable": "Googleまたは電話番号でログインしたアカウントにはパスワードがないため変更できません。",
 
+  "history_retention_note": "変換履歴は720時間（30日）を過ぎると古い順に自動削除されます。",
+
+  "idle_title": "延長しますか？",
+  "idle_desc": "1時間操作がありませんでした。このウィンドウを押さないと {time} 後に自動ログアウトします。",
+  "idle_continue": "引き続き使う",
+  "idle_logged_out": "長時間操作がなかったため自動ログアウトしました。",
+
   "theme_to_dark": "ダークモードに切り替え",
   "theme_to_light": "ライトモードに切り替え",
 

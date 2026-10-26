@@ -129,6 +129,13 @@
   "password_too_many": "Too many attempts. Please try again later.",
   "password_unavailable": "Accounts signed in with Google or phone have no password to change.",
 
+  "history_retention_note": "History older than 720 hours (30 days) is deleted automatically, oldest first.",
+
+  "idle_title": "Extend your session?",
+  "idle_desc": "No activity for 1 hour. You will be signed out automatically in {time} unless you click here.",
+  "idle_continue": "Keep using",
+  "idle_logged_out": "You were signed out after a long period of inactivity.",
+
   "theme_to_dark": "Switch to dark mode",
   "theme_to_light": "Switch to light mode",
 

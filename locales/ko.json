@@ -129,6 +129,13 @@
   "password_too_many": "시도 횟수가 너무 많습니다. 잠시 후 다시 시도해 주세요.",
   "password_unavailable": "Google 또는 휴대폰으로 로그인한 계정은 비밀번호가 없어 변경할 수 없습니다.",
 
+  "history_retention_note": "변환 기록은 720시간(30일)이 지나면 오래된 순서대로 자동 삭제됩니다.",
+
+  "idle_title": "연장하실까요?",
+  "idle_desc": "1시간 동안 사용이 없었습니다. 이 창을 누르지 않으면 {time} 후 자동 로그아웃됩니다.",
+  "idle_continue": "계속 사용하기",
+  "idle_logged_out": "장시간 사용이 없어 자동 로그아웃되었습니다.",
+
   "theme_to_dark": "어두운 화면으로 전환",
   "theme_to_light": "밝은 화면으로 전환",
 

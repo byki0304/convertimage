@@ -1,15 +1,19 @@
 'use client';
 
 import {
+  Timestamp,
   collection,
   doc,
+  getDocs,
   increment,
   limit,
   onSnapshot,
   orderBy,
   query,
   serverTimestamp,
+  where,
   writeBatch,
+  type Firestore,
 } from 'firebase/firestore';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { getFirebaseDb } from '@/lib/firebase';
@@ -19,6 +23,11 @@ import type { HistoryEntry } from '@/types';
 const LOCAL_KEY = 'ci_history';
 const GUEST_LIMIT = 10;
 const MEMBER_LIMIT = 50;
+
+export const HISTORY_RETENTION_HOURS = 720;
+const RETENTION_MS = HISTORY_RETENTION_HOURS * 60 * 60 * 1000;
+const PRUNE_INTERVAL_MS = 10 * 60 * 1000;
+const PRUNE_BATCH_SIZE = 400;
 
 interface HistoryContextValue {
   entries: HistoryEntry[];
@@ -30,10 +39,18 @@ interface HistoryContextValue {
 
 const HistoryContext = createContext<HistoryContextValue | null>(null);
 
+function retentionCutoff(): number {
+  return Date.now() - RETENTION_MS;
+}
+
 function readLocal(): HistoryEntry[] {
   try {
     const raw = window.localStorage.getItem(LOCAL_KEY);
-    return raw ? (JSON.parse(raw) as HistoryEntry[]) : [];
+    const all = raw ? (JSON.parse(raw) as HistoryEntry[]) : [];
+    const cutoff = retentionCutoff();
+    const fresh = all.filter((entry) => entry.convertedAt >= cutoff);
+    if (fresh.length !== all.length) writeLocal(fresh);
+    return fresh;
   } catch {
     return [];
   }
@@ -41,6 +58,24 @@ function readLocal(): HistoryEntry[] {
 
 function writeLocal(entries: HistoryEntry[]) {
   window.localStorage.setItem(LOCAL_KEY, JSON.stringify(entries.slice(0, GUEST_LIMIT)));
+}
+
+/**
+ * Deletes expired member history oldest-first while the app is open. The Firestore TTL
+ * policy on `expireAt` performs the same cleanup server-side for users who never return.
+ */
+async function pruneMemberHistory(db: Firestore, uid: string) {
+  const historyRef = collection(db, 'users', uid, 'history');
+  for (;;) {
+    const expired = await getDocs(
+      query(historyRef, where('convertedAt', '<', retentionCutoff()), orderBy('convertedAt', 'asc'), limit(PRUNE_BATCH_SIZE))
+    );
+    if (expired.empty) return;
+    const batch = writeBatch(db);
+    expired.docs.forEach((d) => batch.delete(d.ref));
+    await batch.commit();
+    if (expired.size < PRUNE_BATCH_SIZE) return;
+  }
 }
 
 function todayKey(): string {
@@ -59,8 +94,14 @@ export function HistoryProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!user || !db) {
       setEntries(readLocal());
-      return;
+      const timer = window.setInterval(() => setEntries(readLocal()), PRUNE_INTERVAL_MS);
+      return () => window.clearInterval(timer);
     }
+
+    const prune = () => pruneMemberHistory(db, user.uid).catch((error) => console.error('History prune failed', error));
+    prune();
+    const timer = window.setInterval(prune, PRUNE_INTERVAL_MS);
+
     const historyQuery = query(
       collection(db, 'users', user.uid, 'history'),
       orderBy('convertedAt', 'desc'),
@@ -68,7 +109,17 @@ export function HistoryProvider({ children }: { children: ReactNode }) {
     );
     const unsubscribeHistory = onSnapshot(
       historyQuery,
-      (snapshot) => setEntries(snapshot.docs.map((d) => ({ ...(d.data() as HistoryEntry), id: d.id }))),
+      (snapshot) => {
+        const cutoff = retentionCutoff();
+        setEntries(
+          snapshot.docs
+            .map((d) => {
+              const { expireAt: _expireAt, ...data } = d.data();
+              return { ...(data as HistoryEntry), id: d.id };
+            })
+            .filter((entry) => entry.convertedAt >= cutoff)
+        );
+      },
       (error) => console.error('History subscription failed', error)
     );
     const unsubscribeProfile = onSnapshot(
@@ -77,6 +128,7 @@ export function HistoryProvider({ children }: { children: ReactNode }) {
       (error) => console.error('Profile subscription failed', error)
     );
     return () => {
+      window.clearInterval(timer);
       unsubscribeHistory();
       unsubscribeProfile();
     };
@@ -96,7 +148,11 @@ export function HistoryProvider({ children }: { children: ReactNode }) {
       const batch = writeBatch(db);
       const counts: Record<string, number> = {};
       for (const entry of newEntries) {
-        batch.set(doc(collection(db, 'users', user.uid, 'history')), { ...entry, uid: user.uid });
+        batch.set(doc(collection(db, 'users', user.uid, 'history')), {
+          ...entry,
+          uid: user.uid,
+          expireAt: Timestamp.fromMillis(entry.convertedAt + RETENTION_MS),
+        });
         counts[entry.toFormat] = (counts[entry.toFormat] ?? 0) + 1;
       }
       const formatCounts = Object.fromEntries(

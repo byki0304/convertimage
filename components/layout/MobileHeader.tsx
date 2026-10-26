@@ -5,21 +5,21 @@ import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { FormatSelect } from '@/components/converter/FormatSelect';
 import { Logo } from '@/components/ui/Logo';
-import { BoltIcon } from '@/components/ui/NeonIcons';
+import { BoltIcon, LogoutIcon } from '@/components/ui/NeonIcons';
 import { useImageConverter } from '@/hooks/useImageConverter';
 import { useI18n } from '@/lib/i18n';
 
 /** Portrait: 56px header. Landscape: compact 48px single row with format quick-select and convert action. */
-export function MobileHeader() {
+export function MobileHeader({ onLogout }: { onLogout: () => void }) {
   const { t } = useI18n();
   const pathname = usePathname();
   const { targetFormat, setTargetFormat, convertAll, isProcessing, items } = useImageConverter();
   const isHome = pathname === '/';
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-2 border-b border-neon-cyan/15 bg-obsidian/70 px-4 backdrop-blur-glass lg:hidden max-lg:landscape:h-12">
+    <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-2 border-b border-neon-cyan/15 bg-obsidian/70 px-3 backdrop-blur-glass sm:px-4 lg:hidden max-lg:landscape:h-12">
       <Logo size="sm" />
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5 sm:gap-2">
         {isHome && (
           <div className="hidden items-center gap-2 max-lg:landscape:flex">
             <FormatSelect value={targetFormat} onChange={setTargetFormat} ariaLabel={t('label_target')} />
@@ -35,6 +35,15 @@ export function MobileHeader() {
           </div>
         )}
         <LanguageSwitcher compact />
+        <button
+          type="button"
+          onClick={onLogout}
+          aria-label={t('nav_logout')}
+          title={t('nav_logout')}
+          className="grid h-8 w-8 shrink-0 place-items-center rounded-xl border border-neon-magenta/40 text-neon-magenta transition-all hover:bg-neon-magenta/10 hover:shadow-neon-magenta active:scale-90"
+        >
+          <LogoutIcon className="h-[18px] w-[18px]" />
+        </button>
         <ThemeToggle compact />
       </div>
     </header>

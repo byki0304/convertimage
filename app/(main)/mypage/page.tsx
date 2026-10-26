@@ -6,7 +6,7 @@ import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
 import { FormatSelect } from '@/components/converter/FormatSelect';
 import { GlassPanel } from '@/components/ui/GlassPanel';
 import { NeonButton } from '@/components/ui/NeonButton';
-import { GhostIcon, LogoutIcon, SoundIcon, UserIcon } from '@/components/ui/NeonIcons';
+import { GhostIcon, SoundIcon, UserIcon } from '@/components/ui/NeonIcons';
 import { useToast } from '@/components/ui/Toast';
 import { useConversionHistory } from '@/hooks/useConversionHistory';
 import { useFirebaseAuth } from '@/hooks/useFirebaseAuth';
@@ -82,12 +82,6 @@ export default function MyPage() {
               <p className="text-sm text-white/55">{t('mypage_guest_desc')}</p>
               <NeonButton onClick={handleLogout}>{t('mypage_login_cta')}</NeonButton>
             </div>
-          )}
-
-          {user && (
-            <NeonButton variant="danger" icon={<LogoutIcon />} onClick={handleLogout} className="mt-auto lg:hidden">
-              {t('nav_logout')}
-            </NeonButton>
           )}
         </GlassPanel>
 

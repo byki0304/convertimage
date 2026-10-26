@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, type ReactNode } from 'react';
+import { IdleSessionGuard } from '@/components/common/IdleSessionGuard';
 import { useFirebaseAuth } from '@/hooks/useFirebaseAuth';
 import { useI18n } from '@/lib/i18n';
 import { DesktopSidebar } from './DesktopSidebar';
@@ -47,7 +48,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-dvh">
       <DesktopSidebar />
-      <MobileHeader />
+      <MobileHeader onLogout={handleLogout} />
       <div className="lg:pl-[280px]">
         <DesktopTopBar onLogout={handleLogout} />
         <main className="mx-auto w-full max-w-5xl px-4 pb-24 pt-5 sm:px-6 lg:px-8 lg:pb-12 lg:pt-8 max-lg:landscape:pb-20 max-lg:landscape:pt-3">
@@ -55,6 +56,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </main>
       </div>
       <MobileBottomNav />
+      <IdleSessionGuard onLogout={handleLogout} />
     </div>
   );
 }
