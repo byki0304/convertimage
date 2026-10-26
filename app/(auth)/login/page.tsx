@@ -18,23 +18,97 @@ import {
   UserPlusIcon,
 } from '@/components/ui/NeonIcons';
 import { useFirebaseAuth } from '@/hooks/useFirebaseAuth';
-import { useI18n } from '@/lib/i18n';
+import { DEFAULT_COUNTRY_CODE, toE164 } from '@/lib/account';
+import { useI18n, type TranslationKey } from '@/lib/i18n';
 
-type Mode = 'select' | 'email' | 'register' | 'phone';
+type Mode = 'select' | 'email' | 'phone' | 'signup' | 'signupEmail' | 'signupPhone' | 'guest';
 
-const RECAPTCHA_CONTAINER_ID = 'recaptcha-container';
 const HOME_ROUTE = '/';
+const NICKNAME_MAX = 20;
+
+const PARENT_MODE: Record<Mode, Mode> = {
+  select: 'select',
+  email: 'select',
+  phone: 'select',
+  signup: 'select',
+  signupEmail: 'signup',
+  signupPhone: 'signup',
+  guest: 'select',
+};
+
+const SUBTITLE: Record<Mode, TranslationKey> = {
+  select: 'auth_subtitle',
+  email: 'auth_email',
+  phone: 'auth_phone',
+  signup: 'auth_signup_subtitle',
+  signupEmail: 'auth_signup_email',
+  signupPhone: 'auth_signup_phone',
+  guest: 'auth_guest_subtitle',
+};
+
+const ERROR_MESSAGES: Record<string, TranslationKey> = {
+  'auth/email-already-in-use': 'auth_error_account_exists',
+  'auth/invalid-credential': 'auth_error_invalid_login',
+  'auth/wrong-password': 'auth_error_invalid_login',
+  'auth/user-not-found': 'auth_error_invalid_login',
+  'auth/invalid-email': 'auth_error_invalid_email',
+  'auth/invalid-phone-number': 'auth_error_phone_invalid',
+  'auth/weak-password': 'auth_error_password_short',
+};
+
+const inputClass =
+  'h-11 w-full min-w-0 rounded-xl border border-neon-cyan/25 bg-obsidian/70 px-3.5 text-sm text-white outline-none transition-all placeholder:text-white/25 focus:border-neon-cyan focus:shadow-neon-cyan';
 
 function NeonInput(props: React.InputHTMLAttributes<HTMLInputElement> & { label: string }) {
   const { label, ...rest } = props;
   return (
     <label className="flex flex-col gap-1.5">
       <span className="text-xs font-semibold text-white/60">{label}</span>
-      <input
-        {...rest}
-        className="h-11 rounded-xl border border-neon-cyan/25 bg-obsidian/70 px-3.5 text-sm text-white outline-none transition-all placeholder:text-white/25 focus:border-neon-cyan focus:shadow-neon-cyan"
-      />
+      <input {...rest} className={inputClass} />
     </label>
+  );
+}
+
+function PhoneNumberInput({
+  countryCode,
+  phone,
+  onCountryCodeChange,
+  onPhoneChange,
+}: {
+  countryCode: string;
+  phone: string;
+  onCountryCodeChange: (value: string) => void;
+  onPhoneChange: (value: string) => void;
+}) {
+  const { t } = useI18n();
+  return (
+    <div className="flex flex-col gap-1.5">
+      <span className="text-xs font-semibold text-white/60">{t('auth_phone_label')}</span>
+      <div className="flex gap-2">
+        <input
+          aria-label={t('auth_country_code_label')}
+          type="tel"
+          inputMode="tel"
+          autoComplete="tel-country-code"
+          required
+          maxLength={5}
+          value={countryCode}
+          onChange={(e) => onCountryCodeChange(e.target.value.replace(/[^\d+]/g, ''))}
+          className={`${inputClass} w-20 shrink-0 text-center font-mono`}
+        />
+        <input
+          aria-label={t('auth_phone_label')}
+          type="tel"
+          inputMode="tel"
+          autoComplete="tel-national"
+          required
+          placeholder={t('auth_phone_placeholder')}
+          value={phone}
+          onChange={(e) => onPhoneChange(e.target.value.replace(/[^\d\s-]/g, ''))}
+          className={`${inputClass} flex-1 font-mono`}
+        />
+      </div>
+    </div>
   );
 }
 
@@ -78,6 +152,13 @@ function OptionButton({
   );
 }
 
+const panelMotion = {
+  initial: { opacity: 0, x: 20 },
+  animate: { opacity: 1, x: 0 },
+  exit: { opacity: 0, x: -20 },
+  transition: { duration: 0.2 },
+};
+
 export default function LoginPage() {
   const { t } = useI18n();
   const router = useRouter();
@@ -85,15 +166,13 @@ export default function LoginPage() {
   const [mode, setMode] = useState<Mode>('select');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
-  const [displayName, setDisplayName] = useState('');
+  const [countryCode, setCountryCode] = useState(DEFAULT_COUNTRY_CODE);
   const [phone, setPhone] = useState('');
-  const [code, setCode] = useState('');
-  const [codeSent, setCodeSent] = useState(false);
+  const [nickname, setNickname] = useState('');
   const [showContinue, setShowContinue] = useState(true);
 
   useEffect(() => {
@@ -105,7 +184,8 @@ export default function LoginPage() {
   const switchMode = (next: Mode) => {
     setMode(next);
     setError(null);
-    setNotice(null);
+    setPassword('');
+    setPasswordConfirm('');
   };
 
   const run = async (action: () => Promise<void>) => {
@@ -115,10 +195,30 @@ export default function LoginPage() {
       await action();
     } catch (err) {
       const errorCode = (err as { code?: string; message?: string }).code ?? (err as Error).message;
-      setError(`${t('auth_error_generic')} (${errorCode})`);
+      const known = ERROR_MESSAGES[errorCode];
+      setError(known ? t(known) : `${t('auth_error_generic')} (${errorCode})`);
     } finally {
       setBusy(false);
     }
+  };
+
+  /** Shared checks for signup screens; returns false (and shows the error) when invalid. */
+  const validateNewPassword = () => {
+    if (password.length < 6) {
+      setError(t('auth_error_password_short'));
+      return false;
+    }
+    if (password !== passwordConfirm) {
+      setError(t('auth_error_password_mismatch'));
+      return false;
+    }
+    return true;
+  };
+
+  const validatePhone = () => {
+    if (toE164(countryCode, phone)) return true;
+    setError(t('auth_error_phone_invalid'));
+    return false;
   };
 
   const handleGoogle = () =>
@@ -135,37 +235,74 @@ export default function LoginPage() {
     });
   };
 
-  const handleRegister = (e: FormEvent) => {
+  const handlePhoneLogin = (e: FormEvent) => {
     e.preventDefault();
-    if (password.length < 6) return setError(t('auth_error_password_short'));
-    if (password !== passwordConfirm) return setError(t('auth_error_password_mismatch'));
+    if (!validatePhone()) return;
     run(async () => {
-      await auth.registerWithEmail(email, password, displayName);
+      await auth.signInWithPhone(countryCode, phone, password);
       goHome();
     });
   };
 
-  const handlePhone = (e: FormEvent) => {
+  const handleEmailSignup = (e: FormEvent) => {
     e.preventDefault();
+    if (!validateNewPassword()) return;
     run(async () => {
-      if (!codeSent) {
-        await auth.sendPhoneCode(phone, RECAPTCHA_CONTAINER_ID);
-        setCodeSent(true);
-        setNotice(t('auth_code_sent'));
-      } else {
-        await auth.verifyPhoneCode(code);
-        goHome();
-      }
+      await auth.registerWithEmail(email, password);
+      goHome();
     });
   };
 
-  const handleGuest = () => {
-    auth.continueAsGuest();
+  const handlePhoneSignup = (e: FormEvent) => {
+    e.preventDefault();
+    if (!validatePhone() || !validateNewPassword()) return;
+    run(async () => {
+      await auth.registerWithPhone(countryCode, phone, password);
+      goHome();
+    });
+  };
+
+  const handleGuest = (e: FormEvent) => {
+    e.preventDefault();
+    const name = nickname.trim();
+    if (!name) return setError(t('auth_error_nickname_required'));
+    auth.continueAsGuest(name);
     goHome();
   };
 
   const memberDisabled = !auth.isFirebaseConfigured || busy;
-  const signedInName = auth.user?.displayName || auth.user?.email || auth.user?.phoneNumber;
+  const submitLabel = (key: TranslationKey) => (busy ? t('auth_processing') : t(key));
+
+  const passwordFields = (isNew: boolean) => (
+    <>
+      <NeonInput
+        label={t('auth_password_label')}
+        type="password"
+        autoComplete={isNew ? 'new-password' : 'current-password'}
+        required
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+      />
+      {isNew && (
+        <NeonInput
+          label={t('auth_password_confirm_label')}
+          type="password"
+          autoComplete="new-password"
+          required
+          value={passwordConfirm}
+          onChange={(e) => setPasswordConfirm(e.target.value)}
+        />
+      )}
+    </>
+  );
+
+  const phoneField = (
+    <PhoneNumberInput countryCode={countryCode} phone={phone} onCountryCodeChange={setCountryCode} onPhoneChange={setPhone} />
+  );
+
+  const emailField = (
+    <NeonInput label={t('auth_email_label')} type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+  );
 
   return (
     <div className="relative flex min-h-dvh flex-col items-center justify-center px-4 py-10 max-lg:landscape:py-4">
@@ -190,8 +327,7 @@ export default function LoginPage() {
           <div className="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-neon-cyan/15 blur-3xl" />
 
           <div className="relative">
-            <h1 className="neon-text text-2xl font-extrabold">{t('auth_title')}</h1>
-            <p className="mb-5 mt-1 text-sm text-white/50">{t('auth_subtitle')}</p>
+            <p className="mb-5 text-sm font-semibold text-white/60">{t(SUBTITLE[mode])}</p>
 
             {!auth.isFirebaseConfigured && (
               <p className="mb-4 flex gap-2 rounded-xl border border-neon-magenta/40 bg-neon-magenta/10 p-3 text-xs leading-relaxed text-neon-magenta">
@@ -203,7 +339,7 @@ export default function LoginPage() {
             {auth.user && showContinue && mode === 'select' && (
               <div className="mb-4 flex flex-col gap-2">
                 <NeonButton size="lg" className="w-full" onClick={goHome}>
-                  {t('auth_continue_as', { name: signedInName ?? '' })}
+                  {t('auth_continue_as', { name: auth.displayName })}
                 </NeonButton>
                 <button
                   type="button"
@@ -220,98 +356,99 @@ export default function LoginPage() {
 
             <AnimatePresence mode="wait">
               {mode === 'select' && (
-                <motion.div
-                  key="select"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.2 }}
-                  className="grid gap-2.5 max-lg:landscape:grid-cols-2"
-                >
+                <motion.div key="select" {...panelMotion} className="grid gap-2.5 max-lg:landscape:grid-cols-2">
                   <OptionButton icon={<GoogleIcon className="h-5 w-5" />} label={t('auth_google')} onClick={handleGoogle} disabled={memberDisabled} />
                   <OptionButton icon={<MailIcon className="h-5 w-5" />} label={t('auth_email')} onClick={() => switchMode('email')} disabled={memberDisabled} />
                   <OptionButton icon={<PhoneIcon className="h-5 w-5" />} label={t('auth_phone')} onClick={() => switchMode('phone')} disabled={memberDisabled} />
-                  <OptionButton icon={<UserPlusIcon className="h-5 w-5" />} label={t('auth_register')} onClick={() => switchMode('register')} disabled={memberDisabled} accent="purple" />
+                  <button
+                    type="button"
+                    onClick={() => switchMode('signup')}
+                    disabled={memberDisabled}
+                    className="mx-auto flex items-center gap-1.5 py-1 text-sm font-semibold text-neon-purple underline-offset-4 transition-colors hover:text-neon-cyan hover:underline disabled:cursor-not-allowed disabled:opacity-35 max-lg:landscape:col-span-2"
+                  >
+                    <UserPlusIcon className="h-4 w-4" glow={false} />
+                    {t('auth_signup_prompt')}
+                  </button>
                   <div className="my-1 flex items-center gap-3 text-[11px] uppercase tracking-widest text-white/30 max-lg:landscape:col-span-2 max-lg:landscape:hidden">
                     <span className="h-px flex-1 bg-white/10" />
                     {t('auth_or')}
                     <span className="h-px flex-1 bg-white/10" />
                   </div>
-                  <OptionButton icon={<GhostIcon className="h-5 w-5" />} label={t('auth_guest')} description={t('auth_guest_desc')} onClick={handleGuest} accent="magenta" />
+                  <div className="max-lg:landscape:col-span-2">
+                    <OptionButton
+                      icon={<GhostIcon className="h-5 w-5" />}
+                      label={t('auth_guest')}
+                      description={t('auth_guest_desc')}
+                      onClick={() => switchMode('guest')}
+                      accent="magenta"
+                    />
+                  </div>
+                </motion.div>
+              )}
+
+              {mode === 'signup' && (
+                <motion.div key="signup" {...panelMotion} className="grid gap-2.5">
+                  <OptionButton icon={<MailIcon className="h-5 w-5" />} label={t('auth_signup_email')} onClick={() => switchMode('signupEmail')} disabled={memberDisabled} accent="purple" />
+                  <OptionButton icon={<PhoneIcon className="h-5 w-5" />} label={t('auth_signup_phone')} onClick={() => switchMode('signupPhone')} disabled={memberDisabled} accent="purple" />
                 </motion.div>
               )}
 
               {mode === 'email' && (
-                <motion.form
-                  key="email"
-                  onSubmit={handleEmailLogin}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.2 }}
-                  className="flex flex-col gap-3"
-                >
-                  <NeonInput label={t('auth_email_label')} type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-                  <NeonInput label={t('auth_password_label')} type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+                <motion.form key="email" onSubmit={handleEmailLogin} {...panelMotion} className="flex flex-col gap-3">
+                  {emailField}
+                  {passwordFields(false)}
                   <NeonButton type="submit" size="lg" disabled={busy} className="mt-2 w-full">
-                    {busy ? t('auth_processing') : t('auth_submit_login')}
-                  </NeonButton>
-                </motion.form>
-              )}
-
-              {mode === 'register' && (
-                <motion.form
-                  key="register"
-                  onSubmit={handleRegister}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.2 }}
-                  className="flex flex-col gap-3"
-                >
-                  <NeonInput label={t('auth_display_name_label')} type="text" autoComplete="nickname" value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
-                  <NeonInput label={t('auth_email_label')} type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-                  <NeonInput label={t('auth_password_label')} type="password" autoComplete="new-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
-                  <NeonInput label={t('auth_password_confirm_label')} type="password" autoComplete="new-password" required value={passwordConfirm} onChange={(e) => setPasswordConfirm(e.target.value)} />
-                  <NeonButton type="submit" size="lg" disabled={busy} className="mt-2 w-full">
-                    {busy ? t('auth_processing') : t('auth_submit_register')}
+                    {submitLabel('auth_submit_login')}
                   </NeonButton>
                 </motion.form>
               )}
 
               {mode === 'phone' && (
-                <motion.form
-                  key="phone"
-                  onSubmit={handlePhone}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.2 }}
-                  className="flex flex-col gap-3"
-                >
-                  <NeonInput
-                    label={`${t('auth_phone_label')} (+82)`}
-                    type="tel"
-                    autoComplete="tel"
-                    required
-                    placeholder={t('auth_phone_placeholder')}
-                    value={phone}
-                    disabled={codeSent}
-                    onChange={(e) => setPhone(e.target.value)}
-                  />
-                  {codeSent && (
-                    <NeonInput
-                      label={t('auth_code_label')}
-                      inputMode="numeric"
-                      autoComplete="one-time-code"
-                      maxLength={6}
-                      required
-                      value={code}
-                      onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
-                    />
-                  )}
+                <motion.form key="phone" onSubmit={handlePhoneLogin} {...panelMotion} className="flex flex-col gap-3">
+                  {phoneField}
+                  {passwordFields(false)}
                   <NeonButton type="submit" size="lg" disabled={busy} className="mt-2 w-full">
-                    {busy ? t('auth_processing') : codeSent ? t('auth_verify_code') : t('auth_send_code')}
+                    {submitLabel('auth_submit_login')}
+                  </NeonButton>
+                </motion.form>
+              )}
+
+              {mode === 'signupEmail' && (
+                <motion.form key="signupEmail" onSubmit={handleEmailSignup} {...panelMotion} className="flex flex-col gap-3">
+                  {emailField}
+                  {passwordFields(true)}
+                  <NeonButton type="submit" size="lg" disabled={busy} className="mt-2 w-full">
+                    {submitLabel('auth_submit_register')}
+                  </NeonButton>
+                </motion.form>
+              )}
+
+              {mode === 'signupPhone' && (
+                <motion.form key="signupPhone" onSubmit={handlePhoneSignup} {...panelMotion} className="flex flex-col gap-3">
+                  {phoneField}
+                  {passwordFields(true)}
+                  <NeonButton type="submit" size="lg" disabled={busy} className="mt-2 w-full">
+                    {submitLabel('auth_submit_register')}
+                  </NeonButton>
+                </motion.form>
+              )}
+
+              {mode === 'guest' && (
+                <motion.form key="guest" onSubmit={handleGuest} {...panelMotion} className="flex flex-col gap-3">
+                  <NeonInput
+                    label={t('auth_guest_nickname_label')}
+                    type="text"
+                    autoComplete="nickname"
+                    autoFocus
+                    required
+                    maxLength={NICKNAME_MAX}
+                    placeholder={t('auth_guest_nickname_placeholder')}
+                    value={nickname}
+                    onChange={(e) => setNickname(e.target.value)}
+                  />
+                  <p className="text-[11px] text-white/45">{t('auth_guest_desc')}</p>
+                  <NeonButton type="submit" size="lg" className="mt-2 w-full">
+                    {t('auth_guest_start')}
                   </NeonButton>
                 </motion.form>
               )}
@@ -323,16 +460,11 @@ export default function LoginPage() {
                 {error}
               </p>
             )}
-            {notice && !error && <p className="mt-4 text-center text-xs text-neon-cyan">{notice}</p>}
 
             {mode !== 'select' && (
               <button
                 type="button"
-                onClick={() => {
-                  switchMode('select');
-                  setCodeSent(false);
-                  setCode('');
-                }}
+                onClick={() => switchMode(PARENT_MODE[mode])}
                 className="mx-auto mt-5 flex items-center gap-1 text-xs text-white/50 hover:text-neon-cyan"
               >
                 <ChevronIcon direction="left" className="h-3.5 w-3.5" glow={false} />
@@ -342,8 +474,6 @@ export default function LoginPage() {
           </div>
         </GlassPanel>
       </motion.div>
-
-      <div id={RECAPTCHA_CONTAINER_ID} />
     </div>
   );
 }

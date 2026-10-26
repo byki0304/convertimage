@@ -8,8 +8,8 @@ import { useI18n } from '@/lib/i18n';
 
 export function DesktopTopBar({ onLogout }: { onLogout: () => void }) {
   const { t } = useI18n();
-  const { user } = useFirebaseAuth();
-  const name = user?.displayName || user?.email || user?.phoneNumber || t('mypage_guest');
+  const { displayName } = useFirebaseAuth();
+  const name = displayName || t('mypage_guest');
 
   return (
     <header className="sticky top-0 z-20 hidden h-16 items-center justify-between border-b border-neon-cyan/10 bg-obsidian/60 px-8 backdrop-blur-glass lg:flex">

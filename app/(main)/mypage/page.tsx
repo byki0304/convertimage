@@ -10,6 +10,7 @@ import { GhostIcon, SoundIcon, UserIcon } from '@/components/ui/NeonIcons';
 import { useToast } from '@/components/ui/Toast';
 import { useConversionHistory } from '@/hooks/useConversionHistory';
 import { useFirebaseAuth } from '@/hooks/useFirebaseAuth';
+import { getAccountIdentity, getLoginType } from '@/lib/account';
 import { useI18n } from '@/lib/i18n';
 import { useSettings } from '@/lib/settings';
 import type { TargetFormat } from '@/types';
@@ -18,12 +19,13 @@ export default function MyPage() {
   const { t } = useI18n();
   const router = useRouter();
   const { showToast } = useToast();
-  const { user, isGuest, logout } = useFirebaseAuth();
-  const { totalConversions } = useConversionHistory();
+  const { user, isGuest, displayName: accountName, logout } = useFirebaseAuth();
+  const { totalConversions, mileage } = useConversionHistory();
   const { preferredFormat, setPreferredFormat, soundEnabled, setSoundEnabled } = useSettings();
 
-  const providerId = user?.providerData[0]?.providerId ?? (user?.phoneNumber ? 'phone' : null);
-  const displayName = user?.displayName || user?.email || user?.phoneNumber || t('mypage_guest');
+  const identity = user ? getAccountIdentity(user) : null;
+  const loginType = user ? getLoginType(user) : null;
+  const displayName = accountName || t('mypage_guest');
 
   const handleFormatChange = (format: TargetFormat) => {
     setPreferredFormat(format);
@@ -53,27 +55,32 @@ export default function MyPage() {
               <p className="text-xs text-white/45">
                 {t('mypage_total')}: <span className="font-mono text-neon-cyan">{totalConversions}</span>
               </p>
+              {user && (
+                <p className="text-xs text-white/45">
+                  {t('mypage_mileage')}: <span className="font-mono text-neon-magenta">{mileage.toLocaleString()} M</span>
+                </p>
+              )}
             </div>
           </div>
 
           {user ? (
             <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
-              {user.email && (
+              {identity?.email && (
                 <>
                   <dt className="text-white/45">{t('mypage_email')}</dt>
-                  <dd className="truncate text-white">{user.email}</dd>
+                  <dd className="truncate text-white">{identity.email}</dd>
                 </>
               )}
-              {user.phoneNumber && (
+              {identity?.phone && (
                 <>
                   <dt className="text-white/45">{t('mypage_phone')}</dt>
-                  <dd className="text-white">{user.phoneNumber}</dd>
+                  <dd className="text-white">{identity.phone}</dd>
                 </>
               )}
-              {providerId && (
+              {loginType && (
                 <>
                   <dt className="text-white/45">{t('mypage_provider')}</dt>
-                  <dd className="font-mono text-xs text-neon-purple">{providerId}</dd>
+                  <dd className="font-mono text-xs text-neon-purple">{loginType}</dd>
                 </>
               )}
             </dl>

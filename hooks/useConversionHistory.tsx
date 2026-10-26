@@ -17,11 +17,13 @@ import {
 } from 'firebase/firestore';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { getFirebaseDb } from '@/lib/firebase';
+import { GUEST_HISTORY_KEY } from '@/lib/session';
 import { useFirebaseAuth } from './useFirebaseAuth';
 import type { HistoryEntry } from '@/types';
 
-const LOCAL_KEY = 'ci_history';
+const LOCAL_KEY = GUEST_HISTORY_KEY;
 const GUEST_LIMIT = 10;
+export const MILEAGE_PER_FILE = 1;
 const MEMBER_LIMIT = 50;
 
 export const HISTORY_RETENTION_HOURS = 720;
@@ -32,6 +34,7 @@ const PRUNE_BATCH_SIZE = 400;
 interface HistoryContextValue {
   entries: HistoryEntry[];
   totalConversions: number;
+  mileage: number;
   isMemberHistory: boolean;
   addEntries: (entries: HistoryEntry[]) => Promise<void>;
   deleteEntries: (ids: string[]) => Promise<void>;
@@ -85,9 +88,10 @@ function todayKey(): string {
 }
 
 export function HistoryProvider({ children }: { children: ReactNode }) {
-  const { user } = useFirebaseAuth();
+  const { user, isGuest } = useFirebaseAuth();
   const [entries, setEntries] = useState<HistoryEntry[]>([]);
   const [memberTotal, setMemberTotal] = useState(0);
+  const [mileage, setMileage] = useState(0);
   const db = getFirebaseDb();
   const isMemberHistory = Boolean(user && db);
 
@@ -124,7 +128,11 @@ export function HistoryProvider({ children }: { children: ReactNode }) {
     );
     const unsubscribeProfile = onSnapshot(
       doc(db, 'users', user.uid),
-      (snapshot) => setMemberTotal((snapshot.data()?.totalConversions as number | undefined) ?? 0),
+      (snapshot) => {
+        const data = snapshot.data();
+        setMemberTotal((data?.totalConversions as number | undefined) ?? 0);
+        setMileage((data?.mileage as number | undefined) ?? 0);
+      },
       (error) => console.error('Profile subscription failed', error)
     );
     return () => {
@@ -132,7 +140,7 @@ export function HistoryProvider({ children }: { children: ReactNode }) {
       unsubscribeHistory();
       unsubscribeProfile();
     };
-  }, [user, db]);
+  }, [user, db, isGuest]);
 
   const addEntries = useCallback(
     async (newEntries: HistoryEntry[]) => {
@@ -160,7 +168,11 @@ export function HistoryProvider({ children }: { children: ReactNode }) {
       );
       batch.set(
         doc(db, 'users', user.uid),
-        { totalConversions: increment(newEntries.length), updatedAt: serverTimestamp() },
+        {
+          totalConversions: increment(newEntries.length),
+          mileage: increment(newEntries.length * MILEAGE_PER_FILE),
+          updatedAt: serverTimestamp(),
+        },
         { merge: true }
       );
       batch.set(
@@ -194,11 +206,12 @@ export function HistoryProvider({ children }: { children: ReactNode }) {
     () => ({
       entries,
       totalConversions: isMemberHistory ? memberTotal : entries.length,
+      mileage: isMemberHistory ? mileage : 0,
       isMemberHistory,
       addEntries,
       deleteEntries,
     }),
-    [entries, isMemberHistory, memberTotal, addEntries, deleteEntries]
+    [entries, isMemberHistory, memberTotal, mileage, addEntries, deleteEntries]
   );
 
   return <HistoryContext.Provider value={value}>{children}</HistoryContext.Provider>;

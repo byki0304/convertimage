@@ -3,42 +3,41 @@
 import {
   EmailAuthProvider,
   GoogleAuthProvider,
-  RecaptchaVerifier,
   createUserWithEmailAndPassword,
   onAuthStateChanged,
   reauthenticateWithCredential,
   updatePassword,
   signInWithEmailAndPassword,
-  signInWithPhoneNumber,
   signInWithPopup,
   signInWithRedirect,
   signOut,
-  updateProfile,
-  type ConfirmationResult,
   type User,
 } from 'firebase/auth';
 import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { getAccountIdentity, getLoginType, phoneToAccountEmail, toE164 } from '@/lib/account';
 import { getFirebaseAuth, getFirebaseDb, isFirebaseConfigured } from '@/lib/firebase';
 import { useI18n } from '@/lib/i18n';
-import { isGuestSession, setGuestSession } from '@/lib/session';
+import { clearGuestData, getGuestNickname, isGuestSession, startGuestSession } from '@/lib/session';
 import { useSettings } from '@/lib/settings';
 import { LOCALES, TARGET_FORMATS, type Locale, type TargetFormat } from '@/types';
 
 interface AuthContextValue {
   user: User | null;
   isGuest: boolean;
+  /** Nickname for guests, otherwise the member's name / email / mobile number. */
+  displayName: string;
   isReady: boolean;
   isAuthenticated: boolean;
   isFirebaseConfigured: boolean;
   signInWithGoogle: () => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<void>;
-  registerWithEmail: (email: string, password: string, displayName: string) => Promise<void>;
-  sendPhoneCode: (phoneNumber: string, recaptchaContainerId: string) => Promise<void>;
-  verifyPhoneCode: (code: string) => Promise<void>;
+  registerWithEmail: (email: string, password: string) => Promise<void>;
+  signInWithPhone: (countryCode: string, phoneNumber: string, password: string) => Promise<void>;
+  registerWithPhone: (countryCode: string, phoneNumber: string, password: string) => Promise<void>;
   hasPasswordProvider: boolean;
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
-  continueAsGuest: () => void;
+  continueAsGuest: (nickname: string) => void;
   logout: () => Promise<void>;
 }
 
@@ -50,12 +49,10 @@ function requireAuth() {
   return auth;
 }
 
-/** Converts local Korean numbers (010-1234-5678) into E.164 (+821012345678). */
-export function toE164(phoneNumber: string): string {
-  const trimmed = phoneNumber.replace(/[\s-()]/g, '');
-  if (trimmed.startsWith('+')) return trimmed;
-  if (trimmed.startsWith('0')) return `+82${trimmed.slice(1)}`;
-  return `+82${trimmed}`;
+function phoneAccountEmail(countryCode: string, phoneNumber: string): string {
+  const e164 = toE164(countryCode, phoneNumber);
+  if (!e164) throw new Error('auth/invalid-phone-number');
+  return phoneToAccountEmail(e164);
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -63,13 +60,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { preferredFormat, setPreferredFormat } = useSettings();
   const [user, setUser] = useState<User | null>(null);
   const [isGuest, setIsGuest] = useState(false);
+  const [guestNickname, setGuestNickname] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [profileLoadedFor, setProfileLoadedFor] = useState<string | null>(null);
-  const confirmationRef = useRef<ConfirmationResult | null>(null);
-  const recaptchaRef = useRef<RecaptchaVerifier | null>(null);
 
   useEffect(() => {
     setIsGuest(isGuestSession());
+    setGuestNickname(getGuestNickname());
     const auth = getFirebaseAuth();
     if (!auth) {
       setIsReady(true);
@@ -77,9 +74,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     return onAuthStateChanged(auth, (nextUser) => {
       setUser(nextUser);
-      if (nextUser) {
-        setGuestSession(false);
+      if (nextUser && isGuestSession()) {
+        clearGuestData();
         setIsGuest(false);
+        setGuestNickname(null);
       }
       setIsReady(true);
     });
@@ -100,14 +98,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (LOCALES.includes(data.preferredLanguage)) setLocale(data.preferredLanguage as Locale);
           if (TARGET_FORMATS.includes(data.preferredFormat)) setPreferredFormat(data.preferredFormat as TargetFormat);
         } else {
+          const identity = getAccountIdentity(user);
           await setDoc(ref, {
             uid: user.uid,
-            email: user.email,
-            phoneNumber: user.phoneNumber,
+            email: identity.email,
+            phoneNumber: identity.phone,
             displayName: user.displayName,
+            loginType: getLoginType(user),
             preferredLanguage: locale,
             preferredFormat,
             totalConversions: 0,
+            mileage: 0,
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
           });
@@ -150,33 +151,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signInWithEmail = useCallback(async (email: string, password: string) => {
-    await signInWithEmailAndPassword(requireAuth(), email, password);
+    await signInWithEmailAndPassword(requireAuth(), email.trim(), password);
   }, []);
 
-  const registerWithEmail = useCallback(async (email: string, password: string, displayName: string) => {
-    const credential = await createUserWithEmailAndPassword(requireAuth(), email, password);
-    if (displayName) await updateProfile(credential.user, { displayName });
+  const registerWithEmail = useCallback(async (email: string, password: string) => {
+    await createUserWithEmailAndPassword(requireAuth(), email.trim(), password);
   }, []);
 
-  const sendPhoneCode = useCallback(async (phoneNumber: string, recaptchaContainerId: string) => {
-    const auth = requireAuth();
-    auth.languageCode = locale;
-    if (!recaptchaRef.current) {
-      recaptchaRef.current = new RecaptchaVerifier(auth, recaptchaContainerId, { size: 'invisible' });
-    }
-    try {
-      confirmationRef.current = await signInWithPhoneNumber(auth, toE164(phoneNumber), recaptchaRef.current);
-    } catch (error) {
-      recaptchaRef.current.clear();
-      recaptchaRef.current = null;
-      throw error;
-    }
-  }, [locale]);
+  const signInWithPhone = useCallback(async (countryCode: string, phoneNumber: string, password: string) => {
+    await signInWithEmailAndPassword(requireAuth(), phoneAccountEmail(countryCode, phoneNumber), password);
+  }, []);
 
-  const verifyPhoneCode = useCallback(async (code: string) => {
-    if (!confirmationRef.current) throw new Error('auth/missing-verification-id');
-    await confirmationRef.current.confirm(code);
-    confirmationRef.current = null;
+  const registerWithPhone = useCallback(async (countryCode: string, phoneNumber: string, password: string) => {
+    await createUserWithEmailAndPassword(requireAuth(), phoneAccountEmail(countryCode, phoneNumber), password);
   }, []);
 
   /** Firebase rejects password updates on stale sessions, so the current password is re-verified first. */
@@ -188,14 +175,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await updatePassword(currentUser, newPassword);
   }, []);
 
-  const continueAsGuest = useCallback(() => {
-    setGuestSession(true);
+  const continueAsGuest = useCallback((nickname: string) => {
+    startGuestSession(nickname);
+    setGuestNickname(nickname);
     setIsGuest(true);
   }, []);
 
   const logout = useCallback(async () => {
-    setGuestSession(false);
+    clearGuestData();
     setIsGuest(false);
+    setGuestNickname(null);
     setProfileLoadedFor(null);
     const auth = getFirebaseAuth();
     if (auth) await signOut(auth);
@@ -205,20 +194,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     () => ({
       user,
       isGuest,
+      displayName: user ? getAccountIdentity(user).label : guestNickname ?? '',
       isReady,
       isAuthenticated: Boolean(user) || isGuest,
       isFirebaseConfigured,
       signInWithGoogle,
       signInWithEmail,
       registerWithEmail,
-      sendPhoneCode,
-      verifyPhoneCode,
+      signInWithPhone,
+      registerWithPhone,
       hasPasswordProvider: Boolean(user?.providerData.some((p) => p.providerId === 'password')),
       changePassword,
       continueAsGuest,
       logout,
     }),
-    [user, isGuest, isReady, signInWithGoogle, signInWithEmail, registerWithEmail, sendPhoneCode, verifyPhoneCode, changePassword, continueAsGuest, logout]
+    [user, isGuest, guestNickname, isReady, signInWithGoogle, signInWithEmail, registerWithEmail, signInWithPhone, registerWithPhone, changePassword, continueAsGuest, logout]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
