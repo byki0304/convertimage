@@ -9,7 +9,27 @@ export const metadata: Metadata = {
   title: 'convertimage — Lossless Game Asset Converter',
   description: 'Convert JPG, PNG, WebP, AVIF, GIF and BMP game assets without quality loss, up to 20 files at once.',
   manifest: '/manifest.json',
-  icons: { icon: '/icon.svg' },
+  applicationName: 'convertimage',
+  icons: {
+    icon: [
+      { url: '/assets/brand/icons/desktop/icon-16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/assets/brand/icons/desktop/icon-32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/assets/brand/icons/desktop/icon-48.png', sizes: '48x48', type: 'image/png' },
+      { url: '/assets/brand/icons/desktop/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icon.svg', type: 'image/svg+xml' },
+    ],
+    shortcut: '/assets/brand/icons/desktop/icon-32.png',
+    apple: [{ url: '/assets/brand/icons/mobile/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
+  },
+  appleWebApp: {
+    capable: true,
+    title: 'convertimage',
+    statusBarStyle: 'black-translucent',
+  },
+  other: {
+    'msapplication-TileColor': '#0B0C10',
+    'msapplication-TileImage': '/assets/brand/icons/desktop/icon-256.png',
+  },
 };
 
 export const viewport: Viewport = {

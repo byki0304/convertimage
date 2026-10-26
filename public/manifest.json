@@ -1,17 +1,22 @@
 {
-  "name": "convertimage",
+  "id": "/",
+  "name": "convertimage — Lossless Game Asset Converter",
   "short_name": "convertimage",
   "description": "Lossless Game Asset Converter",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "orientation": "any",
+  "lang": "ko",
   "background_color": "#0B0C10",
   "theme_color": "#0B0C10",
+  "categories": ["graphics", "utilities", "productivity"],
   "icons": [
-    {
-      "src": "/icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    }
+    { "src": "/assets/brand/icons/desktop/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/brand/icons/desktop/icon-256.png", "sizes": "256x256", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/brand/icons/desktop/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/brand/icons/mobile/maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/assets/brand/icons/mobile/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
   ]
 }
