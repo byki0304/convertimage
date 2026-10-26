@@ -1,0 +1,116 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-obsidian: #0b0c10;
+  --color-obsidian-card: #12131c;
+  --color-obsidian-surface: #161824;
+  --color-obsidian-glass: rgba(22, 24, 36, 0.75);
+
+  --color-neon-cyan: #00f0ff;
+  --color-neon-magenta: #ff0055;
+  --color-neon-purple: #9d00ff;
+  --color-glow-text: #e0f7fa;
+
+  --blur-glass: 12px;
+
+  --shadow-neon-cyan: 0 0 15px rgba(0, 240, 255, 0.5), inset 0 0 15px rgba(0, 240, 255, 0.2);
+  --shadow-neon-magenta: 0 0 15px rgba(255, 0, 85, 0.5), inset 0 0 15px rgba(255, 0, 85, 0.2);
+  --shadow-neon-purple: 0 0 20px rgba(157, 0, 255, 0.6);
+  --shadow-glow: 0 0 12px rgba(0, 240, 255, 0.45);
+
+  --font-sans: 'Pretendard', 'Noto Sans KR', 'Noto Sans JP', 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', ui-sans-serif, system-ui, sans-serif;
+
+  --animate-pulse-glow: pulseGlow 2s infinite ease-in-out;
+  --animate-portal-spin: portalSpin 20s linear infinite;
+  --animate-aurora: aurora 18s ease-in-out infinite alternate;
+  --animate-glitch: glitch 0.6s steps(2) infinite;
+
+  @keyframes pulseGlow {
+    0%,
+    100% {
+      box-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+    }
+    50% {
+      box-shadow: 0 0 25px rgba(255, 0, 85, 0.8);
+    }
+  }
+
+  @keyframes portalSpin {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes aurora {
+    0% {
+      transform: translate3d(-10%, -5%, 0) scale(1);
+    }
+    50% {
+      transform: translate3d(5%, 8%, 0) scale(1.15);
+    }
+    100% {
+      transform: translate3d(10%, -8%, 0) scale(1.05);
+    }
+  }
+
+  @keyframes glitch {
+    0% {
+      transform: translate(0);
+    }
+    50% {
+      transform: translate(-1px, 1px);
+    }
+    100% {
+      transform: translate(1px, -1px);
+    }
+  }
+}
+
+@layer base {
+  html,
+  body {
+    background-color: var(--color-obsidian);
+    color: #ffffff;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  ::selection {
+    background: rgba(0, 240, 255, 0.35);
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(157, 0, 255, 0.5) transparent;
+  }
+}
+
+@layer components {
+  .glass-panel {
+    background-color: rgba(22, 24, 36, 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(0, 240, 255, 0.3);
+  }
+
+  .neon-text {
+    color: var(--color-glow-text);
+    text-shadow:
+      0 0 8px rgba(0, 240, 255, 0.8),
+      0 0 18px rgba(157, 0, 255, 0.5);
+  }
+
+  .neon-grid {
+    background-image:
+      linear-gradient(rgba(0, 240, 255, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 240, 255, 0.05) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+  }
+
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
