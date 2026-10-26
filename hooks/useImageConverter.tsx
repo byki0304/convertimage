@@ -26,8 +26,7 @@ interface ConverterContextValue {
   isProcessing: boolean;
   progress: { done: number; total: number };
   addFiles: (files: FileList | File[]) => void;
-  removeItem: (id: string) => void;
-  clearAll: () => void;
+  removeItems: (ids: string[]) => void;
   convertAll: () => Promise<void>;
   downloadItem: (id: string) => void;
   downloadAllAsZip: () => Promise<void>;
@@ -140,17 +139,10 @@ export function ConverterProvider({ children }: { children: ReactNode }) {
     [targetFormat, showToast, t, playSfx, patchItem]
   );
 
-  const removeItem = useCallback((id: string) => {
-    setItems((prev) => {
-      const target = prev.find((item) => item.id === id);
-      if (target) revokeItemUrls(target);
-      return prev.filter((item) => item.id !== id);
-    });
-  }, []);
-
-  const clearAll = useCallback(() => {
-    itemsRef.current.forEach(revokeItemUrls);
-    setItems([]);
+  const removeItems = useCallback((ids: string[]) => {
+    const targets = new Set(ids);
+    itemsRef.current.filter((item) => targets.has(item.id)).forEach(revokeItemUrls);
+    setItems((prev) => prev.filter((item) => !targets.has(item.id)));
   }, []);
 
   const convertOne = useCallback(
@@ -292,13 +284,12 @@ export function ConverterProvider({ children }: { children: ReactNode }) {
       isProcessing,
       progress,
       addFiles,
-      removeItem,
-      clearAll,
+      removeItems,
       convertAll,
       downloadItem,
       downloadAllAsZip,
     }),
-    [items, targetFormat, isProcessing, progress, addFiles, removeItem, clearAll, convertAll, downloadItem, downloadAllAsZip]
+    [items, targetFormat, isProcessing, progress, addFiles, removeItems, convertAll, downloadItem, downloadAllAsZip]
   );
 
   return <ConverterContext.Provider value={value}>{children}</ConverterContext.Provider>;

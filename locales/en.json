@@ -64,6 +64,11 @@
   "btn_download": "Download",
   "btn_remove": "Remove",
   "btn_clear_all": "Clear all",
+  "btn_select_all": "Select all",
+  "btn_delete_selected": "Delete ({count})",
+  "btn_clear_selection": "Deselect",
+  "label_select_item": "Select",
+  "msg_deleted": "{count} item(s) deleted.",
 
   "status_pending": "Pending",
   "status_processing": "Converting",

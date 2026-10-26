@@ -64,6 +64,11 @@
   "btn_download": "ダウンロード",
   "btn_remove": "削除",
   "btn_clear_all": "すべて削除",
+  "btn_select_all": "すべて選択",
+  "btn_delete_selected": "削除 ({count})",
+  "btn_clear_selection": "選択解除",
+  "label_select_item": "選択",
+  "msg_deleted": "{count}件を削除しました。",
 
   "status_pending": "待機",
   "status_processing": "変換中",

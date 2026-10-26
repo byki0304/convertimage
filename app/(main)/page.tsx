@@ -6,7 +6,7 @@ import { BatchList } from '@/components/converter/BatchList';
 import { DropZone } from '@/components/converter/DropZone';
 import { FormatTabs } from '@/components/converter/FormatTabs';
 import { NeonButton } from '@/components/ui/NeonButton';
-import { AlertIcon, BoltIcon, DownloadIcon, TrashIcon } from '@/components/ui/NeonIcons';
+import { AlertIcon, BoltIcon, DownloadIcon } from '@/components/ui/NeonIcons';
 import { useImageConverter } from '@/hooks/useImageConverter';
 import { useI18n } from '@/lib/i18n';
 
@@ -24,8 +24,7 @@ export default function ConverterPage() {
     isProcessing,
     progress,
     addFiles,
-    removeItem,
-    clearAll,
+    removeItems,
     convertAll,
     downloadItem,
     downloadAllAsZip,
@@ -94,17 +93,6 @@ export default function ConverterPage() {
             >
               {t('btn_download_all')}
             </NeonButton>
-            <NeonButton
-              variant="danger"
-              size="md"
-              onClick={clearAll}
-              disabled={isProcessing}
-              icon={<TrashIcon />}
-              className="sm:ml-auto"
-            >
-              {t('btn_clear_all')}
-            </NeonButton>
-
             {isProcessing && (
               <div className="h-1 w-full overflow-hidden rounded-full bg-white/10">
                 <motion.div
@@ -116,7 +104,7 @@ export default function ConverterPage() {
             )}
           </div>
 
-          <BatchList items={items} onRemove={removeItem} onDownload={downloadItem} disabled={isProcessing} />
+          <BatchList items={items} onRemoveItems={removeItems} onDownload={downloadItem} disabled={isProcessing} />
         </>
       ) : (
         <p className="rounded-xl border border-dashed border-white/10 px-4 py-6 text-center text-sm text-white/40">

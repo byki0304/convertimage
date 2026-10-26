@@ -1,7 +1,8 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { AlertIcon, CheckIcon, DownloadIcon, FilmIcon, TrashIcon } from '@/components/ui/NeonIcons';
+import { NeonCheckbox } from '@/components/ui/NeonCheckbox';
+import { AlertIcon, CheckIcon, DownloadIcon, FilmIcon } from '@/components/ui/NeonIcons';
 import { formatBytes } from '@/lib/canvasEngine';
 import { useI18n } from '@/lib/i18n';
 import type { ConvertedFileItem } from '@/types';
@@ -9,7 +10,8 @@ import type { ConvertedFileItem } from '@/types';
 interface FileCardProps {
   item: ConvertedFileItem;
   index: number;
-  onRemove: (id: string) => void;
+  selected: boolean;
+  onToggleSelect: (id: string) => void;
   onDownload: (id: string) => void;
   disabled?: boolean;
 }
@@ -21,7 +23,7 @@ const STATUS_STYLES = {
   error: 'border-neon-magenta/60 text-neon-magenta',
 } as const;
 
-export function FileCard({ item, index, onRemove, onDownload, disabled }: FileCardProps) {
+export function FileCard({ item, index, selected, onToggleSelect, onDownload, disabled }: FileCardProps) {
   const { t } = useI18n();
   const isError = item.status === 'error';
   const isDone = item.status === 'completed';
@@ -34,10 +36,25 @@ export function FileCard({ item, index, onRemove, onDownload, disabled }: FileCa
       exit={{ opacity: 0, x: -20 }}
       transition={{ duration: 0.2 }}
       className={`glass-panel group relative flex gap-3 overflow-hidden rounded-xl p-3 ${
-        isError ? 'border-neon-magenta/50' : isDone ? 'border-neon-cyan/50' : ''
+        selected
+          ? 'border-neon-cyan bg-neon-cyan/[0.06] shadow-[0_0_12px_rgba(0,240,255,0.25)]'
+          : isError
+            ? 'border-neon-magenta/50'
+            : isDone
+              ? 'border-neon-cyan/50'
+              : ''
       }`}
     >
       {isError && <div className="pointer-events-none absolute inset-0 animate-glitch bg-neon-magenta/[0.04]" />}
+
+      <div className="flex items-center">
+        <NeonCheckbox
+          checked={selected}
+          onChange={() => onToggleSelect(item.id)}
+          label={`${t('label_select_item')}: ${item.originalName}`}
+          disabled={disabled}
+        />
+      </div>
 
       <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border border-white/10 bg-[conic-gradient(#1a1c28_25%,#12131c_0_50%,#1a1c28_0_75%,#12131c_0)] bg-[length:12px_12px]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -100,7 +117,7 @@ export function FileCard({ item, index, onRemove, onDownload, disabled }: FileCa
         )}
       </div>
 
-      <div className="flex shrink-0 flex-col justify-center gap-1.5">
+      <div className="flex shrink-0 flex-col justify-center">
         <button
           type="button"
           onClick={() => onDownload(item.id)}
@@ -110,16 +127,6 @@ export function FileCard({ item, index, onRemove, onDownload, disabled }: FileCa
           className="grid h-8 w-8 place-items-center rounded-lg border border-neon-cyan/40 text-neon-cyan transition-all hover:bg-neon-cyan/15 hover:shadow-neon-cyan disabled:pointer-events-none disabled:opacity-25"
         >
           <DownloadIcon className="h-4 w-4" />
-        </button>
-        <button
-          type="button"
-          onClick={() => onRemove(item.id)}
-          disabled={disabled}
-          title={t('btn_remove')}
-          aria-label={t('btn_remove')}
-          className="grid h-8 w-8 place-items-center rounded-lg border border-neon-magenta/30 text-neon-magenta/80 transition-all hover:bg-neon-magenta/15 hover:shadow-neon-magenta disabled:pointer-events-none disabled:opacity-25"
-        >
-          <TrashIcon className="h-4 w-4" />
         </button>
       </div>
     </motion.li>

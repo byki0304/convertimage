@@ -1,9 +1,12 @@
 'use client';
 
 import { AnimatePresence, motion, type PanInfo } from 'framer-motion';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ChevronIcon } from '@/components/ui/NeonIcons';
+import { SelectionActionButton } from '@/components/ui/SelectionActionButton';
+import { useToast } from '@/components/ui/Toast';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
+import { useSelection } from '@/hooks/useSelection';
 import { MAX_FILES, PAGE_SIZE } from '@/lib/canvasEngine';
 import { useI18n } from '@/lib/i18n';
 import type { ConvertedFileItem } from '@/types';
@@ -11,15 +14,25 @@ import { FileCard } from './FileCard';
 
 interface BatchListProps {
   items: ConvertedFileItem[];
-  onRemove: (id: string) => void;
+  onRemoveItems: (ids: string[]) => void;
   onDownload: (id: string) => void;
   disabled?: boolean;
 }
 
 const SWIPE_THRESHOLD = 60;
 
-export function BatchList({ items, onRemove, onDownload, disabled }: BatchListProps) {
+export function BatchList({ items, onRemoveItems, onDownload, disabled }: BatchListProps) {
   const { t } = useI18n();
+  const { showToast } = useToast();
+  const itemIds = useMemo(() => items.map((item) => item.id), [items]);
+  const selection = useSelection(itemIds);
+
+  const deleteSelected = () => {
+    const count = selection.selectedCount;
+    onRemoveItems(selection.selectedIds);
+    selection.clear();
+    showToast(t('msg_deleted', { count }), 'success');
+  };
   const layout = useResponsiveLayout();
   const [page, setPage] = useState(0);
   const [direction, setDirection] = useState(1);
@@ -46,12 +59,21 @@ export function BatchList({ items, onRemove, onDownload, disabled }: BatchListPr
   return (
     <section className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="flex items-center gap-2 text-sm font-bold text-white">
-          {t('list_title')}
-          <span className="rounded-md border border-neon-cyan/40 px-1.5 font-mono text-xs text-neon-cyan">
-            {items.length}/{MAX_FILES}
-          </span>
-        </h2>
+        <div className="flex flex-wrap items-center gap-3">
+          <SelectionActionButton
+            selectedCount={selection.selectedCount}
+            onSelectAll={selection.selectAll}
+            onDeleteSelected={deleteSelected}
+            onClearSelection={selection.clear}
+            disabled={disabled}
+          />
+          <h2 className="flex items-center gap-2 text-sm font-bold text-white">
+            {t('list_title')}
+            <span className="rounded-md border border-neon-cyan/40 px-1.5 font-mono text-xs text-neon-cyan">
+              {items.length}/{MAX_FILES}
+            </span>
+          </h2>
+        </div>
 
         {pageCount > 1 && (
           <div className="flex items-center gap-1">
@@ -117,7 +139,8 @@ export function BatchList({ items, onRemove, onDownload, disabled }: BatchListPr
                   key={item.id}
                   item={item}
                   index={start + i}
-                  onRemove={onRemove}
+                  selected={selection.isSelected(item.id)}
+                  onToggleSelect={selection.toggle}
                   onDownload={onDownload}
                   disabled={disabled}
                 />

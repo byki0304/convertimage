@@ -34,7 +34,7 @@ interface HistoryContextValue {
   totalConversions: number;
   isMemberHistory: boolean;
   addEntries: (entries: HistoryEntry[]) => Promise<void>;
-  clearHistory: () => Promise<void>;
+  deleteEntries: (ids: string[]) => Promise<void>;
 }
 
 const HistoryContext = createContext<HistoryContextValue | null>(null);
@@ -173,16 +173,22 @@ export function HistoryProvider({ children }: { children: ReactNode }) {
     [user, db]
   );
 
-  const clearHistory = useCallback(async () => {
-    if (!user || !db) {
-      writeLocal([]);
-      setEntries([]);
-      return;
-    }
-    const batch = writeBatch(db);
-    for (const entry of entries) batch.delete(doc(db, 'users', user.uid, 'history', entry.id));
-    await batch.commit();
-  }, [user, db, entries]);
+  const deleteEntries = useCallback(
+    async (ids: string[]) => {
+      if (ids.length === 0) return;
+      const targets = new Set(ids);
+      if (!user || !db) {
+        const next = readLocal().filter((entry) => !targets.has(entry.id));
+        writeLocal(next);
+        setEntries(next);
+        return;
+      }
+      const batch = writeBatch(db);
+      for (const id of targets) batch.delete(doc(db, 'users', user.uid, 'history', id));
+      await batch.commit();
+    },
+    [user, db]
+  );
 
   const value = useMemo(
     () => ({
@@ -190,9 +196,9 @@ export function HistoryProvider({ children }: { children: ReactNode }) {
       totalConversions: isMemberHistory ? memberTotal : entries.length,
       isMemberHistory,
       addEntries,
-      clearHistory,
+      deleteEntries,
     }),
-    [entries, isMemberHistory, memberTotal, addEntries, clearHistory]
+    [entries, isMemberHistory, memberTotal, addEntries, deleteEntries]
   );
 
   return <HistoryContext.Provider value={value}>{children}</HistoryContext.Provider>;

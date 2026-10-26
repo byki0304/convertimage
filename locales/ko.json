@@ -64,6 +64,11 @@
   "btn_download": "다운로드",
   "btn_remove": "삭제",
   "btn_clear_all": "전체 삭제",
+  "btn_select_all": "전체 선택",
+  "btn_delete_selected": "삭제 ({count})",
+  "btn_clear_selection": "선택 해제",
+  "label_select_item": "선택",
+  "msg_deleted": "{count}개 항목이 삭제되었습니다.",
 
   "status_pending": "대기",
   "status_processing": "변환 중",
