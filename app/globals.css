@@ -10,6 +10,8 @@
   --color-neon-magenta: #ff0055;
   --color-neon-purple: #9d00ff;
   --color-glow-text: #e0f7fa;
+  --color-on-neon: #ffffff;
+  --color-glass: rgba(22, 24, 36, 0.8);
 
   --blur-glass: 12px;
 
@@ -69,12 +71,50 @@
   }
 }
 
+/*
+ * Light theme: the UI is written against dark-theme tokens, so swapping the token values
+ * (white <-> ink, obsidian <-> paper, deeper neon accents for contrast) re-themes every screen.
+ * `.theme-dark` restores the dark tokens for subtrees that must stay dark (the intro).
+ */
+html.light {
+  color-scheme: light;
+  --color-white: #14152b;
+  --color-obsidian: #f3f4fb;
+  --color-obsidian-card: #ffffff;
+  --color-obsidian-surface: #eceefa;
+  --color-obsidian-glass: rgba(255, 255, 255, 0.75);
+  --color-glass: rgba(255, 255, 255, 0.78);
+  --color-neon-cyan: #0091a8;
+  --color-neon-magenta: #e0004d;
+  --color-neon-purple: #7a00d1;
+  --color-glow-text: #1c1446;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+html.light .theme-dark {
+  color-scheme: dark;
+  --color-white: #ffffff;
+  --color-obsidian: #0b0c10;
+  --color-obsidian-card: #12131c;
+  --color-obsidian-surface: #161824;
+  --color-obsidian-glass: rgba(22, 24, 36, 0.75);
+  --color-glass: rgba(22, 24, 36, 0.8);
+  --color-neon-cyan: #00f0ff;
+  --color-neon-magenta: #ff0055;
+  --color-neon-purple: #9d00ff;
+  --color-glow-text: #e0f7fa;
+}
+
 @layer base {
   html,
   body {
     background-color: var(--color-obsidian);
-    color: #ffffff;
+    color: var(--color-white);
     -webkit-tap-highlight-color: transparent;
+    transition: background-color 0.25s ease;
   }
 
   ::selection {
@@ -89,7 +129,7 @@
 
 @layer components {
   .glass-panel {
-    background-color: rgba(22, 24, 36, 0.8);
+    background-color: var(--color-glass);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border: 1px solid rgba(0, 240, 255, 0.3);
@@ -97,6 +137,18 @@
 
   .neon-text {
     color: var(--color-glow-text);
+    text-shadow:
+      0 0 8px rgba(0, 240, 255, 0.8),
+      0 0 18px rgba(157, 0, 255, 0.5);
+  }
+
+  html.light .neon-text {
+    text-shadow:
+      0 0 10px rgba(0, 240, 255, 0.45),
+      0 0 22px rgba(157, 0, 255, 0.25);
+  }
+
+  html.light .theme-dark .neon-text {
     text-shadow:
       0 0 8px rgba(0, 240, 255, 0.8),
       0 0 18px rgba(157, 0, 255, 0.5);

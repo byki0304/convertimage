@@ -3,7 +3,7 @@
   "app_subtitle": "ミニゲーム向けロスレス画像フォーマット変換",
   "app_tagline": "Lossless Game Asset Converter",
 
-  "intro_skip": "スキップ",
+  "intro_skip": "Skip",
   "intro_unmute": "サウンドオン",
   "intro_mute": "サウンドオフ",
   "intro_tap_to_play": "タップしてイントロを再生",
@@ -117,6 +117,20 @@
   "mypage_pref_format": "デフォルト変換フォーマット",
   "mypage_saved": "設定を保存しました。",
   "mypage_total": "総変換数",
+
+  "password_title": "パスワード変更",
+  "password_current": "現在のパスワード",
+  "password_new": "新しいパスワード",
+  "password_confirm": "新しいパスワード（確認）",
+  "password_submit": "パスワードを変更",
+  "password_success": "パスワードを変更しました。",
+  "password_wrong_current": "現在のパスワードが正しくありません。",
+  "password_same_as_current": "新しいパスワードが現在のパスワードと同じです。",
+  "password_too_many": "試行回数が多すぎます。しばらくしてから再度お試しください。",
+  "password_unavailable": "Googleまたは電話番号でログインしたアカウントにはパスワードがないため変更できません。",
+
+  "theme_to_dark": "ダークモードに切り替え",
+  "theme_to_light": "ライトモードに切り替え",
 
   "lang_ko": "한국어",
   "lang_en": "English",

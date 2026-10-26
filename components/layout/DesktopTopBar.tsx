@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { LogoutIcon, UserIcon } from '@/components/ui/NeonIcons';
 import { useFirebaseAuth } from '@/hooks/useFirebaseAuth';
 import { useI18n } from '@/lib/i18n';
@@ -30,6 +31,7 @@ export function DesktopTopBar({ onLogout }: { onLogout: () => void }) {
           <LogoutIcon className="h-4 w-4" />
           {t('nav_logout')}
         </button>
+        <ThemeToggle />
       </div>
     </header>
   );

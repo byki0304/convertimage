@@ -1,10 +1,13 @@
 'use client';
 
 import {
+  EmailAuthProvider,
   GoogleAuthProvider,
   RecaptchaVerifier,
   createUserWithEmailAndPassword,
   onAuthStateChanged,
+  reauthenticateWithCredential,
+  updatePassword,
   signInWithEmailAndPassword,
   signInWithPhoneNumber,
   signInWithPopup,
@@ -33,6 +36,8 @@ interface AuthContextValue {
   registerWithEmail: (email: string, password: string, displayName: string) => Promise<void>;
   sendPhoneCode: (phoneNumber: string, recaptchaContainerId: string) => Promise<void>;
   verifyPhoneCode: (code: string) => Promise<void>;
+  hasPasswordProvider: boolean;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   continueAsGuest: () => void;
   logout: () => Promise<void>;
 }
@@ -174,6 +179,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     confirmationRef.current = null;
   }, []);
 
+  /** Firebase rejects password updates on stale sessions, so the current password is re-verified first. */
+  const changePassword = useCallback(async (currentPassword: string, newPassword: string) => {
+    const currentUser = requireAuth().currentUser;
+    if (!currentUser?.email) throw new Error('auth/no-password-provider');
+    const credential = EmailAuthProvider.credential(currentUser.email, currentPassword);
+    await reauthenticateWithCredential(currentUser, credential);
+    await updatePassword(currentUser, newPassword);
+  }, []);
+
   const continueAsGuest = useCallback(() => {
     setGuestSession(true);
     setIsGuest(true);
@@ -199,10 +213,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       registerWithEmail,
       sendPhoneCode,
       verifyPhoneCode,
+      hasPasswordProvider: Boolean(user?.providerData.some((p) => p.providerId === 'password')),
+      changePassword,
       continueAsGuest,
       logout,
     }),
-    [user, isGuest, isReady, signInWithGoogle, signInWithEmail, registerWithEmail, sendPhoneCode, verifyPhoneCode, continueAsGuest, logout]
+    [user, isGuest, isReady, signInWithGoogle, signInWithEmail, registerWithEmail, sendPhoneCode, verifyPhoneCode, changePassword, continueAsGuest, logout]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

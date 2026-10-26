@@ -2,6 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
+import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { FormatSelect } from '@/components/converter/FormatSelect';
 import { Logo } from '@/components/ui/Logo';
 import { BoltIcon } from '@/components/ui/NeonIcons';
@@ -26,7 +27,7 @@ export function MobileHeader() {
               type="button"
               onClick={convertAll}
               disabled={isProcessing || items.length === 0}
-              className="flex h-8 items-center gap-1 rounded-lg bg-gradient-to-r from-neon-cyan to-neon-purple px-3 text-xs font-bold text-white shadow-[0_0_12px_rgba(0,240,255,0.5)] disabled:opacity-40"
+              className="flex h-8 items-center gap-1 rounded-lg bg-gradient-to-r from-neon-cyan to-neon-purple px-3 text-xs font-bold text-on-neon shadow-[0_0_12px_rgba(0,240,255,0.5)] disabled:opacity-40"
             >
               <BoltIcon className="h-3.5 w-3.5" />
               {t('btn_convert_all')}
@@ -34,6 +35,7 @@ export function MobileHeader() {
           </div>
         )}
         <LanguageSwitcher compact />
+        <ThemeToggle compact />
       </div>
     </header>
   );

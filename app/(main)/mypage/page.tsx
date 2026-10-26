@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { ChangePasswordPanel } from '@/components/account/ChangePasswordPanel';
 import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
 import { FormatSelect } from '@/components/converter/FormatSelect';
 import { GlassPanel } from '@/components/ui/GlassPanel';
@@ -113,6 +114,8 @@ export default function MyPage() {
             </button>
           </div>
         </GlassPanel>
+
+        {user && <ChangePasswordPanel />}
       </div>
     </div>
   );

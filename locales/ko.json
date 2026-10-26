@@ -3,7 +3,7 @@
   "app_subtitle": "미니게임 손실 없는 이미지 포맷 변환기",
   "app_tagline": "Lossless Game Asset Converter",
 
-  "intro_skip": "건너뛰기",
+  "intro_skip": "Skip",
   "intro_unmute": "소리 켜기",
   "intro_mute": "소리 끄기",
   "intro_tap_to_play": "화면을 눌러 인트로 재생",
@@ -117,6 +117,20 @@
   "mypage_pref_format": "기본 변환 포맷",
   "mypage_saved": "설정이 저장되었습니다.",
   "mypage_total": "총 변환 수",
+
+  "password_title": "비밀번호 변경",
+  "password_current": "현재 비밀번호",
+  "password_new": "새 비밀번호",
+  "password_confirm": "새 비밀번호 확인",
+  "password_submit": "비밀번호 변경하기",
+  "password_success": "비밀번호가 변경되었습니다.",
+  "password_wrong_current": "현재 비밀번호가 올바르지 않습니다.",
+  "password_same_as_current": "새 비밀번호가 현재 비밀번호와 같습니다.",
+  "password_too_many": "시도 횟수가 너무 많습니다. 잠시 후 다시 시도해 주세요.",
+  "password_unavailable": "Google 또는 휴대폰으로 로그인한 계정은 비밀번호가 없어 변경할 수 없습니다.",
+
+  "theme_to_dark": "어두운 화면으로 전환",
+  "theme_to_light": "밝은 화면으로 전환",
 
   "lang_ko": "한국어",
   "lang_en": "English",

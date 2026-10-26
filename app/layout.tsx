@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 import { BackgroundFx } from '@/components/ui/BackgroundFx';
+import { THEME_INIT_SCRIPT } from '@/lib/theme';
 import { Providers } from './providers';
 import './globals.css';
 
@@ -20,8 +21,9 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="ko" className="dark" suppressHydrationWarning>
+    <html lang="ko" className="light" suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <link
           rel="stylesheet"
           href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"

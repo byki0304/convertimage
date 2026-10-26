@@ -160,6 +160,26 @@ export const KeyboardIcon = (p: IconProps) => (
   </NeonSvg>
 );
 
+export const SunIcon = (p: IconProps) => (
+  <NeonSvg {...p}>
+    <circle cx="12" cy="12" r="4" />
+    <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+  </NeonSvg>
+);
+
+export const MoonIcon = (p: IconProps) => (
+  <NeonSvg {...p}>
+    <path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z" />
+  </NeonSvg>
+);
+
+export const LockIcon = (p: IconProps) => (
+  <NeonSvg {...p}>
+    <rect x="4.5" y="10.5" width="15" height="10" rx="2" />
+    <path d="M8 10.5V7.5a4 4 0 0 1 8 0v3M12 14.5v2.5" />
+  </NeonSvg>
+);
+
 export const GoogleIcon = ({ className = '' }: { className?: string }) => (
   <svg viewBox="0 0 24 24" aria-hidden="true" className={className}>
     <path fill="#4285F4" d="M23.49 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47c-.29 1.48-1.14 2.73-2.4 3.58v3h3.86c2.26-2.09 3.56-5.17 3.56-8.82z" />

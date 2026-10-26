@@ -58,7 +58,7 @@ export function IntroVideoPlayer() {
 
   return (
     <motion.div
-      className="relative flex h-dvh w-screen items-center justify-center overflow-hidden bg-obsidian"
+      className="theme-dark relative flex h-dvh w-screen items-center justify-center overflow-hidden bg-obsidian text-white"
       animate={{ opacity: isLeaving ? 0 : 1 }}
       transition={{ duration: 0.35 }}
     >

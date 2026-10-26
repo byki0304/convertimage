@@ -15,7 +15,7 @@ interface NeonButtonProps extends Omit<HTMLMotionProps<'button'>, 'children'> {
 
 const VARIANTS: Record<Variant, string> = {
   primary:
-    'bg-gradient-to-r from-neon-cyan via-neon-purple to-neon-magenta text-white shadow-[0_0_15px_rgba(0,240,255,0.5)] hover:shadow-[0_0_28px_rgba(0,240,255,0.75),0_0_42px_rgba(255,0,85,0.45)] hover:brightness-125',
+    'bg-gradient-to-r from-neon-cyan via-neon-purple to-neon-magenta text-on-neon shadow-[0_0_15px_rgba(0,240,255,0.5)] hover:shadow-[0_0_28px_rgba(0,240,255,0.75),0_0_42px_rgba(255,0,85,0.45)] hover:brightness-125',
   ghost:
     'border border-neon-cyan/50 bg-obsidian-card/60 text-neon-cyan hover:bg-neon-cyan/10 hover:shadow-neon-cyan',
   danger:

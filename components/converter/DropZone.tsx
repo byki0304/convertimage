@@ -77,7 +77,7 @@ export function DropZone({ onFilesAdded, inputRef, hasFiles }: DropZoneProps) {
       </h3>
       <p className="relative text-xs text-white/50 sm:text-sm">{t('dropzone_sub')}</p>
 
-      <span className="relative mt-1 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-neon-cyan via-neon-purple to-neon-magenta px-5 py-2.5 text-sm font-semibold text-white shadow-neon-magenta transition-all hover:brightness-125">
+      <span className="relative mt-1 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-neon-cyan via-neon-purple to-neon-magenta px-5 py-2.5 text-sm font-semibold text-on-neon shadow-neon-magenta transition-all hover:brightness-125">
         <UploadIcon className="h-4 w-4" />
         {t('btn_select_file')}
       </span>

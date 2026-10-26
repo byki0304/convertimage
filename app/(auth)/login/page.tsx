@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
+import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { GlassPanel } from '@/components/ui/GlassPanel';
 import { Logo } from '@/components/ui/Logo';
 import { NeonButton } from '@/components/ui/NeonButton';
@@ -168,8 +169,9 @@ export default function LoginPage() {
 
   return (
     <div className="relative flex min-h-dvh flex-col items-center justify-center px-4 py-10 max-lg:landscape:py-4">
-      <div className="absolute right-4 top-4 sm:right-6 sm:top-6">
+      <div className="absolute right-4 top-4 flex items-center gap-2 sm:right-6 sm:top-6">
         <LanguageSwitcher />
+        <ThemeToggle />
       </div>
 
       <motion.div
