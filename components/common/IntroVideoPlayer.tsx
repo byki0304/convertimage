@@ -1,7 +1,6 @@
 'use client';
 
 import { AnimatePresence, motion } from 'framer-motion';
-import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ChevronIcon, SoundIcon } from '@/components/ui/NeonIcons';
 import { useI18n } from '@/lib/i18n';
@@ -12,7 +11,6 @@ const NEXT_ROUTE = '/login';
 
 export function IntroVideoPlayer() {
   const { t } = useI18n();
-  const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
   const finishedRef = useRef(false);
   const [isMuted, setIsMuted] = useState(true);
@@ -20,20 +18,23 @@ export function IntroVideoPlayer() {
   const [needsTap, setNeedsTap] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
 
+  /**
+   * Must be a full navigation: any client-side fetch of /login made before the intro cookie
+   * existed was redirected back here by the middleware, and the router would reuse that redirect.
+   */
   const finish = useCallback(() => {
     if (finishedRef.current) return;
     finishedRef.current = true;
     markIntroSeen();
     setIsLeaving(true);
-    window.setTimeout(() => router.replace(NEXT_ROUTE), 350);
-  }, [router]);
+    window.setTimeout(() => window.location.replace(NEXT_ROUTE), 250);
+  }, []);
 
   useEffect(() => {
-    router.prefetch(NEXT_ROUTE);
     const video = videoRef.current;
     if (!video) return;
     video.play().catch(() => setNeedsTap(true));
-  }, [router]);
+  }, []);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -60,7 +61,7 @@ export function IntroVideoPlayer() {
     <motion.div
       className="theme-dark relative flex h-dvh w-screen items-center justify-center overflow-hidden bg-obsidian text-white"
       animate={{ opacity: isLeaving ? 0 : 1 }}
-      transition={{ duration: 0.35 }}
+      transition={{ duration: 0.25 }}
     >
       <video
         ref={videoRef}
