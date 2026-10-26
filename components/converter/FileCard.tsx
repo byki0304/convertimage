@@ -35,7 +35,7 @@ export function FileCard({ item, index, selected, onToggleSelect, onDownload, di
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
       transition={{ duration: 0.2 }}
-      className={`glass-panel group relative flex gap-3 overflow-hidden rounded-xl p-3 ${
+      className={`glass-panel group relative flex gap-2.5 overflow-hidden rounded-xl p-2 ${
         selected
           ? 'border-neon-cyan bg-neon-cyan/[0.06] shadow-[0_0_12px_rgba(0,240,255,0.25)]'
           : isError
@@ -56,7 +56,7 @@ export function FileCard({ item, index, selected, onToggleSelect, onDownload, di
         />
       </div>
 
-      <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border border-white/10 bg-[conic-gradient(#1a1c28_25%,#12131c_0_50%,#1a1c28_0_75%,#12131c_0)] bg-[length:12px_12px]">
+      <div className="relative h-10 w-10 shrink-0 self-center overflow-hidden rounded-lg border border-white/10 bg-[conic-gradient(#1a1c28_25%,#12131c_0_50%,#1a1c28_0_75%,#12131c_0)] bg-[length:12px_12px]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={item.convertedUrl ?? item.previewUrl}
@@ -64,7 +64,7 @@ export function FileCard({ item, index, selected, onToggleSelect, onDownload, di
           className="h-full w-full object-contain"
           draggable={false}
         />
-        <span className="absolute left-1 top-1 rounded bg-obsidian/80 px-1 font-mono text-[9px] text-white/70">{index + 1}</span>
+        <span className="absolute left-0.5 top-0.5 rounded bg-obsidian/80 px-0.5 font-mono text-[8px] leading-tight text-white/70">{index + 1}</span>
       </div>
 
       <div className="min-w-0 flex-1">
@@ -77,7 +77,7 @@ export function FileCard({ item, index, selected, onToggleSelect, onDownload, di
           </span>
         </div>
 
-        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-white/45">
+        <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-white/45">
           <span className="rounded bg-white/5 px-1.5 font-mono uppercase text-white/70">{item.sourceFormat}</span>
           <span>{formatBytes(item.originalFile.size)}</span>
           {item.width && item.height && (

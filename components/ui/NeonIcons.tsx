@@ -145,11 +145,12 @@ export const FilmIcon = (p: IconProps) => (
   </NeonSvg>
 );
 
-export const ChevronIcon = ({ direction = 'right', ...p }: IconProps & { direction?: 'left' | 'right' | 'down' }) => (
+export const ChevronIcon = ({ direction = 'right', ...p }: IconProps & { direction?: 'left' | 'right' | 'down' | 'up' }) => (
   <NeonSvg {...p}>
     {direction === 'left' && <path d="m15 5-7 7 7 7" />}
     {direction === 'right' && <path d="m9 5 7 7-7 7" />}
     {direction === 'down' && <path d="m5 9 7 7 7-7" />}
+    {direction === 'up' && <path d="m5 15 7-7 7 7" />}
   </NeonSvg>
 );
 

@@ -1,13 +1,14 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { useEffect, useRef } from 'react';
-import { BatchList } from '@/components/converter/BatchList';
+import { useEffect, useRef, useState } from 'react';
+import { BatchList, MoreFilesList } from '@/components/converter/BatchList';
 import { DropZone } from '@/components/converter/DropZone';
 import { FormatTabs } from '@/components/converter/FormatTabs';
 import { NeonButton } from '@/components/ui/NeonButton';
 import { AlertIcon, BoltIcon, DownloadIcon } from '@/components/ui/NeonIcons';
 import { useImageConverter } from '@/hooks/useImageConverter';
+import { PAGE_SIZE } from '@/lib/canvasEngine';
 import { useI18n } from '@/lib/i18n';
 
 function isTypingTarget(target: EventTarget | null): boolean {
@@ -30,6 +31,11 @@ export default function ConverterPage() {
     downloadAllAsZip,
   } = useImageConverter();
   const inputRef = useRef<HTMLInputElement>(null);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+
+  useEffect(() => {
+    if (items.length === 0) setVisibleCount(PAGE_SIZE);
+  }, [items.length]);
 
   const completedCount = items.filter((item) => item.status === 'completed').length;
 
@@ -57,9 +63,9 @@ export default function ConverterPage() {
 
   return (
     <div className="flex flex-col gap-5 max-lg:landscape:gap-3">
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="max-lg:landscape:hidden">
-        <h1 className="neon-text text-2xl font-extrabold sm:text-3xl">{t(`tab_${targetFormat}`)}</h1>
-        <p className="mt-1.5 text-sm text-white/55">{t('first_screen_guide')}</p>
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+        <h1 className="neon-text text-2xl font-extrabold sm:text-3xl max-lg:landscape:text-lg">{t(`tab_${targetFormat}`)}</h1>
+        <p className="mt-1.5 text-sm text-white/55 max-lg:landscape:hidden">{t('first_screen_guide')}</p>
       </motion.div>
 
       <FormatTabs value={targetFormat} onChange={setTargetFormat} disabled={isProcessing} />
@@ -71,16 +77,14 @@ export default function ConverterPage() {
         </p>
       )}
 
-      <DropZone onFilesAdded={addFiles} inputRef={inputRef} hasFiles={items.length > 0} />
-
-      {items.length > 0 ? (
-        <>
-          <div className="glass-panel sticky top-14 z-10 flex flex-wrap items-center gap-2 rounded-2xl p-3 lg:top-16 max-lg:landscape:top-12">
+      <div className="mx-auto flex w-full flex-col gap-3 lg:max-w-[68%] max-lg:landscape:max-w-[70%] max-lg:landscape:gap-2">
+        {items.length > 0 && (
+          <div className="glass-panel sticky top-14 z-10 flex flex-wrap items-center gap-2 rounded-2xl p-2.5 lg:top-16 max-lg:landscape:top-12 max-lg:landscape:p-2">
             <NeonButton
               onClick={() => void convertAll()}
               disabled={isProcessing}
               icon={<BoltIcon />}
-              className="flex-1 sm:flex-none"
+              className="flex-1 whitespace-nowrap sm:flex-none max-lg:h-9 max-lg:px-3 max-lg:text-xs max-lg:landscape:h-8"
             >
               {isProcessing ? t('msg_converting', progress) : `${t('btn_convert_all')} · ${targetFormat.toUpperCase()}`}
             </NeonButton>
@@ -89,7 +93,7 @@ export default function ConverterPage() {
               onClick={() => void downloadAllAsZip()}
               disabled={isProcessing || completedCount === 0}
               icon={<DownloadIcon />}
-              className="flex-1 sm:flex-none"
+              className="flex-1 whitespace-nowrap sm:flex-none max-lg:h-9 max-lg:px-3 max-lg:text-xs max-lg:landscape:h-8"
             >
               {t('btn_download_all')}
             </NeonButton>
@@ -103,14 +107,27 @@ export default function ConverterPage() {
               </div>
             )}
           </div>
+        )}
 
-          <BatchList items={items} onRemoveItems={removeItems} onDownload={downloadItem} disabled={isProcessing} />
-        </>
-      ) : (
-        <p className="rounded-xl border border-dashed border-white/10 px-4 py-6 text-center text-sm text-white/40">
-          {t('empty_title')}
-        </p>
-      )}
+        <DropZone onFilesAdded={addFiles} inputRef={inputRef}>
+          {items.length > 0 && (
+            <BatchList
+              items={items}
+              visibleCount={visibleCount}
+              onRemoveItems={removeItems}
+              onDownload={downloadItem}
+              disabled={isProcessing}
+            />
+          )}
+        </DropZone>
+
+        <MoreFilesList
+          items={items}
+          visibleCount={visibleCount}
+          onExpand={setVisibleCount}
+          onCollapse={() => setVisibleCount(PAGE_SIZE)}
+        />
+      </div>
     </div>
   );
 }
