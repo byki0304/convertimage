@@ -85,7 +85,7 @@ export default function MyPage() {
           )}
 
           {user && (
-            <NeonButton variant="danger" icon={<LogoutIcon />} onClick={handleLogout} className="mt-auto">
+            <NeonButton variant="danger" icon={<LogoutIcon />} onClick={handleLogout} className="mt-auto lg:hidden">
               {t('nav_logout')}
             </NeonButton>
           )}
